@@ -1,4 +1,5 @@
 ﻿using LojaGamer.Enums;
+using System.Data;
 
 namespace LojaGamer.Entities
 {

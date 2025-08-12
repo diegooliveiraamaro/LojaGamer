@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.OpenApi.Models;
+using System.Text.Json.Serialization;  // <-- Importante para ReferenceHandler
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,19 +14,20 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<TokenService>();
-builder.Services.AddControllers();
+
+// Configuração para aceitar referências circulares no JSON
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve;
+    });
+
 builder.Services.AddEndpointsApiExplorer();
-
-
-
-//builder.Services.AddSwaggerGen();
-
 
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Loja Gamer API", Version = "v1" });
 
-    // Configuração de autenticação JWT no Swagger
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -52,8 +54,6 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-
-
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(opt =>
     {
@@ -67,14 +67,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!))
         };
     });
+
 builder.Services.AddAuthorization();
 builder.Services.AddSingleton<MongoDbService>();
 
 var app = builder.Build();
+
 app.UseMiddleware<ErrorHandlingMiddleware>();
+
 app.UseSwagger();
 app.UseSwaggerUI();
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
+
 app.Run();

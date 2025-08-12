@@ -19,6 +19,31 @@ namespace LojaGamer.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUsers() => Ok(await _context.Users.ToListAsync());
 
+        //[HttpGet]
+        //public async Task<IActionResult> GetAllUsers()
+        //{
+        //    var users = await _context.Users
+        //        .Include(u => u.Games)
+        //        .ThenInclude(g => g.Promotions)
+        //        .ToListAsync();
+
+        //    return Ok(users);
+        //}
+
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUser(int id)
+        {
+            var user = await _context.Users
+                .Include(u => u.Games) // Eager loading
+                .FirstOrDefaultAsync(u => u.Id == id);
+
+            if (user == null)
+                return NotFound();
+
+            return Ok(user);
+        }
+
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUser(int id, UpdateUserDto dto)
         {
