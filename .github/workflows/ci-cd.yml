@@ -26,13 +26,13 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
-      - name: Restore
+      - name: Restore dependencies
         run: dotnet restore LojaGamer/LojaGamer.csproj
 
       - name: Build
         run: dotnet build LojaGamer/LojaGamer.csproj --configuration Release --no-restore
 
-      - name: Test
+      - name: Run tests
         run: dotnet test LojaGamer/LojaGamer.csproj --no-build --verbosity normal
 
   docker-push-ecr:
@@ -52,29 +52,23 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to ECR
+      - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Ensure ECR repository exists
-        env:
-          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
         run: |
-          aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" || \
-          aws ecr create-repository --repository-name "$ECR_REPOSITORY"
+          aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" || \
+          aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
 
-      - name: Build Docker image
+      - name: Build and push Docker image
         env:
-          AWS_REGION: ${{ env.AWS_REGION }}
-          AWS_ACCOUNT_ID: ${{ env.AWS_ACCOUNT_ID }}
-          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
-          IMAGE_TAG: ${{ env.IMAGE_TAG }}
+          ECR_URI: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}"
         run: |
-          ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
-          echo "ECR URI: $ECR_URI"
-          docker build -f LojaGamer/Dockerfile -t "$ECR_URI:$IMAGE_TAG" .
-          docker tag "$ECR_URI:$IMAGE_TAG" "$ECR_URI:latest"
-          docker push "$ECR_URI:$IMAGE_TAG"
-          docker push "$ECR_URI:latest"
+          echo "Building and pushing Docker image..."
+          docker build -f LojaGamer/Dockerfile -t $ECR_URI:${{ env.IMAGE_TAG }} .
+          docker tag $ECR_URI:${{ env.IMAGE_TAG }} $ECR_URI:latest
+          docker push $ECR_URI:${{ env.IMAGE_TAG }}
+          docker push $ECR_URI:latest
 
       - name: Output pushed image URI
         run: echo "Pushed image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
