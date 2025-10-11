@@ -1,4 +1,4 @@
-name: "CI/CD → Build, Test, Push to ECR"
+name: "CI/CD - Build, Test, Push to ECR"
 
 on:
   push:
@@ -16,6 +16,7 @@ jobs:
   build-test:
     name: Build and Test (.NET)
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,7 +24,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '8.0.x'
+          dotnet-version: "8.0.x"
 
       - name: Restore
         run: dotnet restore LojaGamer/LojaGamer.csproj
@@ -38,11 +39,11 @@ jobs:
     name: Build Docker image & Push to ECR
     needs: build-test
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Configurar credenciais AWS (usando Access Key + Secret + Session Token)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -59,7 +60,7 @@ jobs:
           ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
         run: |
           aws ecr describe-repositories --repository-names "$ECR_REPOSITORY" || \
-            aws ecr create-repository --repository-name "$ECR_REPOSITORY"
+          aws ecr create-repository --repository-name "$ECR_REPOSITORY"
 
       - name: Build Docker image
         env:
@@ -70,11 +71,8 @@ jobs:
         run: |
           ECR_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPOSITORY}"
           echo "ECR URI: $ECR_URI"
-
           docker build -f LojaGamer/Dockerfile -t "$ECR_URI:$IMAGE_TAG" .
-
           docker tag "$ECR_URI:$IMAGE_TAG" "$ECR_URI:latest"
-
           docker push "$ECR_URI:$IMAGE_TAG"
           docker push "$ECR_URI:latest"
 
