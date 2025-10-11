@@ -1,4 +1,4 @@
-name: CI/CD -> Build, Test, Push to ECR
+name: "CI/CD → Build, Test, Push to ECR"
 
 on:
   push:
