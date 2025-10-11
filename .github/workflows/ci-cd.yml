@@ -33,7 +33,7 @@ jobs:
         run: dotnet build LojaGamer/LojaGamer.csproj --configuration Release --no-restore
 
       - name: Run tests
-        run: dotnet test LojaGamer/LojaGamer/LojaGamer/Tests/LojaGamer.Tests.csproj --no-build --verbosity normal
+        run: dotnet test LojaGamer/LojaGamer/LojaGamer/Tests/ --no-build --verbosity normal
 
   docker-push-ecr:
     name: Build Docker image & Push to ECR
@@ -71,4 +71,5 @@ jobs:
           docker push $ECR_URI:latest
 
       - name: Output pushed image URI
-        run: echo "Pushed image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
+        run: |
+          echo "Pushed image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
