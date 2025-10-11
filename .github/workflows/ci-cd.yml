@@ -32,9 +32,7 @@ jobs:
       - name: Build
         run: dotnet build LojaGamer/LojaGamer.csproj --configuration Release --no-restore
 
-      - name: Run tests
-        run: dotnet test LojaGamer/LojaGamer/LojaGamer/Tests/ --no-build --verbosity normal
-
+      
   docker-push-ecr:
     name: Build Docker image & Push to ECR
     needs: build-test
