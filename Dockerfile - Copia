@@ -1,0 +1,21 @@
+# Stage 1: Build da aplicação
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
+
+# Copia a solução e restaura dependências
+COPY LojaGamer.sln .
+COPY LojaGamer/LojaGamer.csproj ./LojaGamer/
+RUN dotnet restore LojaGamer/LojaGamer.csproj
+
+# Copia o restante do código e publica
+COPY . .
+WORKDIR /src/LojaGamer
+RUN dotnet publish -c Release -o /app/publish /p:PublishTrimmed=false -r linux-x64 --self-contained false
+
+# Stage 2: Runtime (imagem final leve)
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+COPY --from=build /app/publish .
+ENV ASPNETCORE_URLS=http://+:80
+EXPOSE 80
+ENTRYPOINT ["dotnet", "LojaGamer.dll"]

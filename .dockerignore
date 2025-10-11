@@ -1,0 +1,11 @@
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.mdf
+*.ldf
+*.log
+.git/
+.gitignore
+docker-compose.override.yml

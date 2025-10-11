@@ -1,0 +1,26 @@
+# Binários e compilados
+bin/
+obj/
+
+# Logs e caches
+*.log
+*.pdb
+*.db
+*.mdf
+*.ldf
+
+# Configurações do VS
+.vscode/
+*.user
+*.suo
+
+# Git
+.git/
+
+# Testes e Migrations (opcional, se não precisa no build)
+Tests/
+Migrations/
+
+# Pastas de recursos de linguagem
+zh-Hans/
+zh-Hant/
