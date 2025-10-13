@@ -13,16 +13,14 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  docker-push-ecr:
+  build-docker-push-ecr:
     name: Build Docker image & Push to ECR
     runs-on: ubuntu-latest
 
     steps:
-      # Passo 1: Clonar repositório
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Passo 2: Configurar credenciais AWS
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -31,29 +29,24 @@ jobs:
           aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      # Passo 3: Login no Amazon ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
-      # Passo 4: Garantir que o repositório ECR existe
       - name: Ensure ECR repository exists
         run: |
           aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" || \
           aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
 
-      # Passo 5: Build e Push da imagem Docker
       - name: Build and push Docker image
         env:
           ECR_URI: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}"
         run: |
           echo "Building and pushing Docker image..."
-          # Ajuste o caminho do build conforme o Dockerfile
-          docker build -f LojaGamer/LojaGamer/Dockerfile -t $ECR_URI:${{ env.IMAGE_TAG }} LojaGamer/LojaGamer/
+          docker build -f Dockerfile -t $ECR_URI:${{ env.IMAGE_TAG }} .
           docker tag $ECR_URI:${{ env.IMAGE_TAG }} $ECR_URI:latest
           docker push $ECR_URI:${{ env.IMAGE_TAG }}
           docker push $ECR_URI:latest
 
-      # Passo 6: Exibir URI da imagem enviada
       - name: Output pushed image URI
         run: |
           echo "Pushed image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
