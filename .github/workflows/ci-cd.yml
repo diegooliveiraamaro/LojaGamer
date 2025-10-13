@@ -1,10 +1,10 @@
-name: "CI/CD - LojaGamer (Build, Push to ECR)"
+name: "CI/CD - Build & Push to ECR"
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -13,49 +13,45 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  build-and-push:
+  docker-push-ecr:
+    name: Build Docker image & Push to ECR
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📦 Checkout do código
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: 🧱 Configurar .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: "8.0.x"
+      - name: List project structure (debug)
+        run: |
+          echo "### Estrutura de diretórios atual:"
+          ls -R
 
-      - name: 🔧 Restaurar dependências
-        run: dotnet restore LojaGamer/LojaGamer.csproj
-
-      - name: 🏗️ Build do projeto
-        run: dotnet build LojaGamer/LojaGamer.csproj --configuration Release --no-restore
-
-      # Removido o passo de testes pois você pediu
-      #- name: 🧪 Rodar testes
-      #  run: dotnet test LojaGamer/Tests/ --no-build --verbosity normal
-
-      - name: 🔑 Configurar credenciais AWS
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: 🐳 Login no Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
 
-      - name: 🏗️ Build e Push da imagem Docker
-        env:
-          ECR_URI: "${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY }}"
+      - name: Ensure ECR repository exists
         run: |
-          echo "Building Docker image..."
-          docker build -f LojaGamer/LojaGamer/Dockerfile -t $ECR_URI:${{ env.IMAGE_TAG }} .
-          docker tag $ECR_URI:${{ env.IMAGE_TAG }} $ECR_URI:latest
+          aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" || \
+          aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
 
-          echo "Pushing Docker image to ECR..."
+      - name: Build and push Docker image
+        env:
+          ECR_URI: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}"
+        run: |
+          echo "Building and pushing Docker image..."
+          docker build -f LojaGamer/Dockerfile -t $ECR_URI:${{ env.IMAGE_TAG }} LojaGamer
+          docker tag $ECR_URI:${{ env.IMAGE_TAG }} $ECR_URI:latest
           docker push $ECR_URI:${{ env.IMAGE_TAG }}
           docker push $ECR_URI:latest
 
-      - name: ✅ Finalização
-        run: echo "Imagem publicada com sucesso no ECR!"
+      - name: Output pushed image URI
+        run: |
+          echo "Pushed image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
