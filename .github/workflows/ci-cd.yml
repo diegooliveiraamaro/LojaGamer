@@ -7,10 +7,12 @@ on:
 env:
   AWS_REGION: us-east-1
   ECR_REPOSITORY: loja-gamer
+  ECR_REGISTRY: 687407529555.dkr.ecr.us-east-1.amazonaws.com
   ECS_CLUSTER: LojaGamerCluster
   ECS_SERVICE: LojaGamerService
   ECS_TASK_DEFINITION: LojaGamerTask
   CONTAINER_NAME: loja-gamer-container
+
 
 jobs:
   deploy:
