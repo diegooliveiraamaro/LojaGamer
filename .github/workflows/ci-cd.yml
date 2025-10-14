@@ -5,9 +5,9 @@ on:
     branches: [ "master" ]
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: sa-east-1
   ECR_REPOSITORY: loja-gamer
-  ECR_REGISTRY: 687407529555.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REGISTRY: 687407529555.dkr.ecr.sa-east-1.amazonaws.com
   ECS_CLUSTER: LojaGamerCluster
   ECS_SERVICE: LojaGamerService
   ECS_TASK_DEFINITION: LojaGamerTask
