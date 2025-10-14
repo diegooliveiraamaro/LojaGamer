@@ -1,52 +1,48 @@
-name: "CI/CD - Build & Push to ECR"
+name: Deploy to AWS ECS
 
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
-  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
-  IMAGE_TAG: ${{ github.sha }}
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: loja-gamer
+  ECS_CLUSTER: LojaGamerCluster
+  ECS_SERVICE: LojaGamerService
+  ECS_TASK_DEFINITION: LojaGamerTask
+  CONTAINER_NAME: loja-gamer-container
 
 jobs:
-  build-docker-push-ecr:
-    name: Build Docker image & Push to ECR
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-          aws-region: ${{ secrets.AWS_REGION }}
-          
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v1
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+        aws-region: ${{ env.AWS_REGION }}
 
-      - name: Ensure ECR repository exists
-        run: |
-          aws ecr describe-repositories --repository-names "${{ env.ECR_REPOSITORY }}" || \
-          aws ecr create-repository --repository-name "${{ env.ECR_REPOSITORY }}"
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Build and push Docker image
-        env:
-          ECR_URI: "${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}"
-        run: |
-          echo "Building and pushing Docker image..."
-          docker build -f Dockerfile -t $ECR_URI:${{ env.IMAGE_TAG }} .
-          docker tag $ECR_URI:${{ env.IMAGE_TAG }} $ECR_URI:latest
-          docker push $ECR_URI:${{ env.IMAGE_TAG }}
-          docker push $ECR_URI:latest
+    - name: Build, tag, and push image to ECR
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest .
+        docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
 
-      - name: Output pushed image URI
-        run: |
-          echo "Pushed image: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/${{ env.ECR_REPOSITORY }}:${{ env.IMAGE_TAG }}"
+    - name: Update ECS service
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+      with:
+        task-definition: ${{ env.ECS_TASK_DEFINITION }}
+        service: ${{ env.ECS_SERVICE }}
+        cluster: ${{ env.ECS_CLUSTER }}
+        wait-for-service-stability: true
