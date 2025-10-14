@@ -59,5 +59,4 @@ namespace LojaGamer.Controllers
             return Ok(new { token });
         }
     }
-
 }
