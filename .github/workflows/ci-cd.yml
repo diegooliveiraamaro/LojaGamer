@@ -10,9 +10,7 @@ env:
   ECR_REGISTRY: 687407529555.dkr.ecr.sa-east-1.amazonaws.com
   ECS_CLUSTER: LojaGamerCluster
   ECS_SERVICE: LojaGamerService
-  ECS_TASK_DEFINITION: LojaGamerTask
   CONTAINER_NAME: loja-gamer-container
-
 
 jobs:
   deploy:
@@ -38,13 +36,15 @@ jobs:
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
       run: |
+        echo "🚀 Building Docker image..."
         docker build -t $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest .
+        echo "📦 Pushing image to ECR..."
         docker push $ECR_REGISTRY/${{ env.ECR_REPOSITORY }}:latest
 
-    - name: Update ECS service
+    - name: Deploy to Amazon ECS
       uses: aws-actions/amazon-ecs-deploy-task-definition@v1
       with:
-        task-definition: ${{ env.ECS_TASK_DEFINITION }}
+        task-definition: .github/ecs/LojaGamerTask.json
         service: ${{ env.ECS_SERVICE }}
         cluster: ${{ env.ECS_CLUSTER }}
         wait-for-service-stability: true
