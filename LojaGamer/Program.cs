@@ -10,9 +10,9 @@ using System.Text.Json.Serialization;  // <-- Importante para ReferenceHandler
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configura DbContext para SQL Server
-builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+//// Configura DbContext para SQL Server
+//builder.Services.AddDbContext<AppDbContext>(opt =>
+  //  opt.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Serviços
 builder.Services.AddScoped<TokenService>();
@@ -77,11 +77,11 @@ builder.Services.AddAuthorization();
 var app = builder.Build();
 
 // Aplica migrations automaticamente ao iniciar
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-}
+//using (var scope = app.Services.CreateScope())
+//{
+//    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+//    db.Database.Migrate();
+//}
 
 // Middleware
 app.UseMiddleware<ErrorHandlingMiddleware>();

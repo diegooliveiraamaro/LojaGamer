@@ -1,28 +1,13 @@
-version: "3.8"
+version: '3.9'
 
 services:
-  sqlserver:
-    image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: sqlserver
-    environment:
-      SA_PASSWORD: "Your_password123"
-      ACCEPT_EULA: "Y"
-    ports:
-      - "1433:1433"
-    volumes:
-      - sql_data:/var/opt/mssql
-
   lojagamer:
-    image: lojagamer-local
     build:
       context: .
       dockerfile: Dockerfile
-    depends_on:
-      - sqlserver
-    environment:
-      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=TechChallengeDb;User Id=sa;Password=Your_password123;TrustServerCertificate=True;
+    container_name: loja-gamer-container
     ports:
       - "8080:80"
-
-volumes:
-  sql_data:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: always
