@@ -1,0 +1,22 @@
+{
+  "family": "LojaGamerTask",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::687407529555:role/ecsTaskExecutionRole",
+  "containerDefinitions": [
+    {
+      "name": "loja-gamer-container",
+      "image": "687407529555.dkr.ecr.sa-east-1.amazonaws.com/loja-gamer:latest",
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ]
+    }
+  ]
+}
